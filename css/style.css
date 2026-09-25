@@ -1,0 +1,872 @@
+@charset "UTF-8";
+
+/* ==========================================================================
+   魔法糖果工坊 - 兒童可愛風格樣式表
+   專為國小三年級量身設計：大字體、高對比、馬卡龍溫暖配色、生動反饋動態
+   ========================================================================== */
+
+:root {
+    --bg-main: #fdfaf2;
+    --bg-card: #ffffff;
+    --primary: #ff6b8b;
+    --primary-light: #ffe4e9;
+    --primary-hover: #ff4770;
+    --secondary: #ffb830;
+    --accent-green: #2ec4b6;
+    --accent-blue: #4361ee;
+    --accent-purple: #7209b7;
+    
+    /* 位數專用識別色彩 */
+    --col-ones: #ff6b8b;       /* 個位 - 草莓粉 */
+    --col-tens: #ff9f1c;       /* 十位 - 蜜柑橙 */
+    --col-hundreds: #2ec4b6;   /* 百位 - 薄荷綠 */
+    --col-thousands: #4361ee;  /* 千位 - 晴空藍 */
+
+    --text-dark: #2d3142;
+    --text-muted: #6b7280;
+    --border-radius-lg: 20px;
+    --border-radius-md: 14px;
+    --border-radius-sm: 8px;
+    --shadow-soft: 0 8px 24px rgba(149, 157, 165, 0.15);
+    --shadow-hover: 0 12px 30px rgba(255, 107, 139, 0.25);
+    --font-bubble: "Nunito", "Comic Sans MS", "PingFang TC", "Microsoft JhengHei", sans-serif;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    user-select: none;
+    -webkit-user-select: none;
+}
+
+body {
+    background: radial-gradient(circle at 10% 20%, #fff7ed 0%, #fef3c7 40%, #fdf2f8 90%);
+    font-family: var(--font-bubble);
+    color: var(--text-dark);
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow-x: hidden;
+    position: relative;
+}
+
+/* 慶祝彩色碎紙畫布 */
+#confetti-canvas {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9999;
+}
+
+/* ================== 頂部導航欄 ================== */
+.navbar {
+    background: rgba(255, 255, 255, 0.92);
+    backdrop-filter: blur(8px);
+    border-bottom: 3px solid #ffedd5;
+    padding: 12px 24px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+    position: sticky;
+    top: 0;
+    z-index: 100;
+}
+
+.brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.brand-icon {
+    font-size: 2.2rem;
+    animation: wiggle 2.5s infinite ease-in-out;
+}
+
+.brand-title {
+    font-size: 1.6rem;
+    font-weight: 900;
+    color: #e63946;
+    letter-spacing: 1px;
+    text-shadow: 1px 1px 0 #ffd166;
+}
+
+.brand-subtitle {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.nav-actions {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.nav-btn {
+    background: #fff;
+    border: 2px solid #fed7aa;
+    padding: 8px 16px;
+    border-radius: var(--border-radius-md);
+    font-size: 1rem;
+    font-weight: 700;
+    color: #ea580c;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: all 0.2s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.06);
+}
+
+.nav-btn:hover {
+    background: #ffedd5;
+    transform: translateY(-2px);
+}
+
+/* ================== 模式切換標籤 ================== */
+.mode-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin: 18px auto 6px;
+    max-width: 900px;
+    padding: 0 16px;
+    width: 100%;
+}
+
+.tab-btn {
+    flex: 1;
+    background: #ffffff;
+    border: 3px solid #ffedd5;
+    padding: 12px 14px;
+    border-radius: var(--border-radius-md);
+    font-size: 1.05rem;
+    font-weight: 800;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.25s;
+    text-align: center;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.04);
+}
+
+.tab-btn:hover {
+    background: #fff7ed;
+    border-color: #fdba74;
+}
+
+.tab-btn.active {
+    background: linear-gradient(135deg, #ff758c 0%, #ff7eb3 100%);
+    color: #ffffff;
+    border-color: #ff5277;
+    box-shadow: 0 6px 16px rgba(255, 117, 140, 0.4);
+    transform: scale(1.03);
+}
+
+/* ================== 關卡與自訂題目面板 ================== */
+.sub-panel {
+    max-width: 1200px;
+    margin: 10px auto;
+    padding: 0 20px;
+    width: 100%;
+}
+
+.level-selector-bar, .custom-input-bar {
+    background: #ffffff;
+    padding: 12px 20px;
+    border-radius: var(--border-radius-md);
+    border: 2px dashed #fdba74;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 15px;
+    flex-wrap: wrap;
+    box-shadow: var(--shadow-soft);
+}
+
+.level-chip {
+    padding: 8px 16px;
+    border-radius: 20px;
+    background: #f3f4f6;
+    border: 2px solid #e5e7eb;
+    font-weight: 700;
+    color: #4b5563;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.level-chip:hover {
+    background: #fef08a;
+    border-color: #eab308;
+    transform: translateY(-2px);
+}
+
+.level-chip.active {
+    background: #fef08a;
+    border-color: #ca8a04;
+    color: #854d0e;
+    box-shadow: 0 4px 10px rgba(202, 138, 4, 0.25);
+}
+
+.custom-input-bar input {
+    width: 110px;
+    padding: 8px 12px;
+    font-size: 1.2rem;
+    font-weight: 800;
+    text-align: center;
+    border: 2px solid #cbd5e1;
+    border-radius: var(--border-radius-sm);
+    color: var(--text-dark);
+}
+
+.btn-primary {
+    background: linear-gradient(135deg, #38bdf8 0%, #0284c7 100%);
+    color: #fff;
+    border: none;
+    padding: 10px 20px;
+    font-size: 1rem;
+    font-weight: 800;
+    border-radius: var(--border-radius-md);
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(2, 132, 199, 0.3);
+    transition: all 0.2s;
+}
+
+.btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 16px rgba(2, 132, 199, 0.4);
+}
+
+/* ================== 小精靈提示對話框 ================== */
+.mascot-banner {
+    max-width: 1200px;
+    margin: 10px auto;
+    padding: 0 20px;
+    width: 100%;
+}
+
+.bubble-dialog {
+    background: #ffffff;
+    border: 3px solid #fecdd3;
+    border-radius: var(--border-radius-lg);
+    padding: 14px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    box-shadow: 0 6px 20px rgba(244, 63, 94, 0.1);
+    position: relative;
+}
+
+.mascot-avatar {
+    font-size: 3rem;
+    background: #ffe4e6;
+    border-radius: 50%;
+    width: 60px;
+    height: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    animation: bounceSlow 2s infinite ease-in-out;
+}
+
+.dialog-content {
+    flex: 1;
+}
+
+.dialog-speaker {
+    font-size: 0.9rem;
+    font-weight: 800;
+    color: #e11d48;
+    margin-bottom: 2px;
+}
+
+.dialog-text {
+    font-size: 1.15rem;
+    font-weight: 700;
+    color: #374151;
+    line-height: 1.45;
+}
+
+/* ================== 主遊戲操作雙欄佈局 ================== */
+.game-container {
+    max-width: 1200px;
+    margin: 8px auto 20px;
+    padding: 0 20px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: 1.25fr 1fr;
+    gap: 24px;
+    flex: 1;
+}
+
+@media (max-width: 900px) {
+    .game-container {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* 左側：具象化糖果工坊台 */
+.candy-workbench {
+    background: #ffffff;
+    border-radius: var(--border-radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow-soft);
+    border: 3px solid #e0e7ff;
+    display: flex;
+    flex-direction: column;
+}
+
+.panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 2px solid #f1f5f9;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+}
+
+.panel-title {
+    font-size: 1.25rem;
+    font-weight: 800;
+    color: #3b82f6;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.candy-columns-container {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 10px;
+    flex: 1;
+    min-height: 310px;
+}
+
+/* 每一位的糖果卡片 */
+.candy-column-card {
+    background: #f8fafc;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--border-radius-md);
+    padding: 10px 8px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    transition: all 0.3s;
+}
+
+.candy-column-card.active-col {
+    background: #fffbeb;
+    border-color: #f59e0b;
+    box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.25);
+    transform: translateY(-4px);
+}
+
+.candy-column-card.borrow-source {
+    border-color: #ef4444;
+    background: #fef2f2;
+}
+
+.candy-column-card.borrow-target {
+    border-color: #10b981;
+    background: #ecfdf5;
+}
+
+.column-header {
+    text-align: center;
+    width: 100%;
+    margin-bottom: 8px;
+}
+
+.col-title {
+    display: block;
+    color: #fff;
+    padding: 3px 6px;
+    border-radius: 12px;
+    font-size: 0.85rem;
+    font-weight: 800;
+    margin-bottom: 3px;
+}
+
+.col-unit-name {
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    font-weight: 700;
+}
+
+.candy-count-badge {
+    background: #ffffff;
+    border: 1px solid #cbd5e1;
+    border-radius: 20px;
+    padding: 3px 10px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    margin-bottom: 10px;
+}
+
+.count-num {
+    font-size: 1.15rem;
+    font-weight: 900;
+    color: #ea580c;
+}
+
+.candy-items-grid {
+    flex: 1;
+    width: 100%;
+    background: #ffffff;
+    border-radius: var(--border-radius-sm);
+    border: 1px dashed #cbd5e1;
+    padding: 6px 4px;
+    display: grid;
+    align-content: center;
+    justify-items: center;
+    min-height: 155px;
+    overflow: hidden; /* 確保絕不出現卷軸，所有糖果一眼可視 */
+}
+
+/* 0~4個 (稀疏): 3列大圖標 */
+.candy-items-grid.density-sparse {
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px 4px;
+}
+
+.candy-items-grid.density-sparse .candy-single-item {
+    font-size: 1.65rem;
+    height: 38px;
+}
+
+/* 5~9個 (中等): 4列排列 */
+.candy-items-grid.density-medium {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 5px 3px;
+}
+
+.candy-items-grid.density-medium .candy-single-item {
+    font-size: 1.35rem;
+    height: 30px;
+}
+
+/* 10~19個 (密集): 5列排列 (五個一排，十格陣直覺對照十進位) */
+.candy-items-grid.density-dense {
+    grid-template-columns: repeat(5, 1fr);
+    gap: 3px 1px;
+    padding: 6px 2px;
+}
+
+.candy-items-grid.density-dense .candy-single-item {
+    font-size: 1.18rem;
+    height: 25px;
+}
+
+.candy-single-item {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    transition: transform 0.2s;
+    line-height: 1;
+}
+
+.candy-single-item:hover {
+    transform: scale(1.25);
+}
+
+.candy-single-item.new-candy {
+    animation: glowPulse 1.2s infinite alternate;
+}
+
+.empty-hint {
+    grid-column: 1 / -1;
+    font-size: 0.85rem;
+    color: #94a3b8;
+    margin: auto;
+    font-weight: 700;
+}
+
+.column-footer-hint {
+    font-size: 0.72rem;
+    color: #64748b;
+    margin-top: 8px;
+    text-align: center;
+    font-weight: 600;
+}
+
+/* ================== 右側：標準直式計算算式台 ================== */
+.math-workbench {
+    background: #ffffff;
+    border-radius: var(--border-radius-lg);
+    padding: 20px;
+    box-shadow: var(--shadow-soft);
+    border: 3px solid #fed7aa;
+    display: flex;
+    flex-direction: column;
+}
+
+.vertical-algorithm-card {
+    background: #fffaf0;
+    border: 2px solid #ffedd5;
+    border-radius: var(--border-radius-md);
+    padding: 16px 20px;
+    margin-bottom: 16px;
+    position: relative;
+}
+
+.place-value-legend {
+    display: grid;
+    grid-template-columns: 50px repeat(4, 1fr);
+    gap: 6px;
+    text-align: center;
+    margin-bottom: 8px;
+    font-size: 0.95rem;
+    font-weight: 800;
+}
+
+.legend-th { color: var(--col-thousands); }
+.legend-h { color: var(--col-hundreds); }
+.legend-t { color: var(--col-tens); }
+.legend-o { color: var(--col-ones); }
+
+/* 直式主要矩陣行 */
+.vert-row {
+    display: grid;
+    grid-template-columns: 50px repeat(4, 1fr);
+    gap: 6px;
+    align-items: center;
+    text-align: center;
+}
+
+.row-op {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #e11d48;
+}
+
+/* 劃記列 (借位後寫在最上面的小字) */
+.annotation-row {
+    height: 56px;
+    margin-bottom: 2px;
+}
+
+.anno-cell {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3px;
+    height: 100%;
+}
+
+.anno-add-ten {
+    background: #8b5cf6;
+    color: #fff;
+    border-radius: 6px;
+    font-size: 0.82rem;
+    font-weight: 800;
+    padding: 2px 6px;
+    box-shadow: 0 2px 5px rgba(139, 92, 246, 0.3);
+    animation: popIn 0.3s ease;
+}
+
+.anno-badge {
+    background: #f43f5e;
+    color: #ffffff;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-weight: 900;
+    padding: 1px 6px;
+    box-shadow: 0 2px 5px rgba(244, 63, 94, 0.3);
+    animation: popIn 0.3s ease;
+}
+
+/* 數字單元格 */
+.digit-cell {
+    font-size: 2.1rem;
+    font-weight: 800;
+    height: 52px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    position: relative;
+}
+
+.digit-cell.struck {
+    color: #94a3b8;
+}
+
+/* 紅色劃線 (斜線借位劃掉) */
+.digit-cell.struck::after {
+    content: "";
+    position: absolute;
+    width: 60%;
+    height: 3px;
+    background: #ef4444;
+    top: 50%;
+    left: 20%;
+    transform: rotate(-45deg);
+    border-radius: 2px;
+}
+
+.vert-divider {
+    height: 4px;
+    background: #374151;
+    border-radius: 2px;
+    margin: 8px 0;
+    width: 100%;
+}
+
+/* 答案格行 */
+.answer-row {
+    margin-top: 4px;
+}
+
+.answer-cell {
+    height: 54px;
+    border: 2px dashed #cbd5e1;
+    border-radius: var(--border-radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 900;
+    background: #ffffff;
+    color: #15803d;
+    transition: all 0.25s;
+}
+
+.answer-cell.active-target {
+    border: 3px solid #f59e0b;
+    background: #fef3c7;
+    animation: pulseBorder 1.5s infinite;
+}
+
+.answer-cell.filled {
+    border-style: solid;
+    border-color: #22c55e;
+    background: #f0fdf4;
+}
+
+/* ================== 操作按鈕區與數字鍵盤 ================== */
+.action-zone {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+/* 借位拆箱按鈕（非常醒目） */
+.btn-borrow-magic {
+    background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);
+    color: #ffffff;
+    border: 3px solid #fbbf24;
+    border-radius: var(--border-radius-md);
+    padding: 14px 20px;
+    font-size: 1.25rem;
+    font-weight: 900;
+    cursor: pointer;
+    box-shadow: 0 6px 18px rgba(217, 119, 6, 0.35);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    transition: all 0.2s;
+}
+
+.btn-borrow-magic.pulse-need {
+    animation: bounceButton 1.2s infinite ease-in-out;
+    background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+    border-color: #f87171;
+    box-shadow: 0 8px 24px rgba(220, 38, 38, 0.4);
+}
+
+.btn-borrow-magic:disabled {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+    color: #94a3b8;
+    cursor: not-allowed;
+    box-shadow: none;
+    animation: none;
+}
+
+/* 數字鍵盤 (適合觸控與滑鼠直覺操作) */
+.keypad-grid {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 8px;
+    margin-top: 4px;
+}
+
+.num-key {
+    background: #ffffff;
+    border: 2px solid #e2e8f0;
+    border-radius: var(--border-radius-sm);
+    padding: 12px 0;
+    font-size: 1.4rem;
+    font-weight: 800;
+    color: #1e293b;
+    cursor: pointer;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.05);
+    transition: all 0.15s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.num-key:hover {
+    background: #f1f5f9;
+    border-color: #94a3b8;
+    transform: translateY(-2px);
+}
+
+.num-key:active {
+    transform: translateY(1px);
+}
+
+.num-key.key-clear {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+}
+
+.num-key.key-enter {
+    background: #dcfce7;
+    border-color: #86efac;
+    color: #15803d;
+}
+
+/* ================== 過關與結算彈窗 ================== */
+.modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.6);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.modal-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+
+.modal-card {
+    background: #ffffff;
+    border-radius: 28px;
+    padding: 32px 28px;
+    text-align: center;
+    max-width: 480px;
+    width: 90%;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.25);
+    border: 6px solid #fde047;
+    transform: scale(0.85);
+    transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.modal-overlay.show .modal-card {
+    transform: scale(1);
+}
+
+.modal-icon {
+    font-size: 4rem;
+    margin-bottom: 12px;
+    animation: popIn 0.5s ease;
+}
+
+.modal-title {
+    font-size: 1.8rem;
+    font-weight: 900;
+    color: #ea580c;
+    margin-bottom: 10px;
+}
+
+.modal-body {
+    font-size: 1.15rem;
+    color: #4b5563;
+    line-height: 1.6;
+    margin-bottom: 24px;
+}
+
+.modal-actions {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+}
+
+/* ================== 動畫特效 ================== */
+@keyframes wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    25% { transform: rotate(-8deg); }
+    75% { transform: rotate(8deg); }
+}
+
+@keyframes bounceSlow {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-8px); }
+}
+
+@keyframes bounceButton {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+}
+
+@keyframes pulseBorder {
+    0%, 100% { border-color: #f59e0b; box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4); }
+    50% { border-color: #d97706; box-shadow: 0 0 0 8px rgba(245, 158, 11, 0.15); }
+}
+
+@keyframes glowPulse {
+    from { filter: drop-shadow(0 0 2px #ff6b8b); }
+    to { filter: drop-shadow(0 0 8px #ff6b8b); }
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.3); opacity: 0; }
+    80% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* 借位飛行糖果箱 */
+.flying-candy-box {
+    position: fixed;
+    font-size: 2.8rem;
+    z-index: 9999;
+    pointer-events: none;
+    transition: all 0.6s cubic-bezier(0.25, 1, 0.5, 1);
+    filter: drop-shadow(0 8px 16px rgba(0,0,0,0.2));
+}
+
+.shake-source {
+    animation: shake 0.4s ease-in-out;
+}
+
+.burst-receive {
+    animation: burst 0.4s ease-out;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    20%, 60% { transform: translateX(-6px); }
+    40%, 80% { transform: translateX(6px); }
+}
+
+@keyframes burst {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.15); }
+    100% { transform: scale(1); }
+}
