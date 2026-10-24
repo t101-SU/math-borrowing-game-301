@@ -165,6 +165,11 @@ class MathBorrowingApp {
         window.addEventListener('keydown', (e) => {
             if (['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'].includes(e.key)) {
                 this.handleNumberInput(e.key);
+            } else if (e.key === 'Backspace' || e.key === 'Delete') {
+                if (this.engine.phase === 'BORROW_INPUT') {
+                    this.engine.clearBorrowBuffer();
+                    this.renderAll();
+                }
             } else if (e.key === ' ' || e.key === 'b' || e.key === 'B') {
                 if (!this.btnBorrow.disabled) {
                     this.handleBorrowClick();
@@ -251,6 +256,8 @@ class MathBorrowingApp {
     }
 
     renderVerticalEquation() {
+        const borrowStep = (this.engine.phase === 'BORROW_INPUT') ? this.engine.getCurrentBorrowStep() : null;
+
         // 渲染被減數與減數
         for (let i = 0; i < 4; i++) {
             this.minCells[i].textContent = this.engine.originalMinuendDigits[i];
@@ -265,13 +272,31 @@ class MathBorrowingApp {
 
             // 頂部劃記數字處理 (借來的 +10 放在最上方，其下方為原數字劃記剩餘值)
             this.annoCells[i].innerHTML = '';
-            if (this.engine.annotations[i].borrowAdd > 0) {
+
+            const isWaitingBorrowAdd = (borrowStep && borrowStep.col === i && borrowStep.type === 'BORROW_ADD');
+            const isWaitingRemainder = (borrowStep && borrowStep.col === i && borrowStep.type === 'REMAINDER');
+
+            // 1. 借來的 +10 (若正在輸入借來數，顯示待輸入框；若已完成，顯示 +10 徽章)
+            if (isWaitingBorrowAdd) {
+                const inputBadge = document.createElement('span');
+                inputBadge.className = 'anno-input-active anno-input-ten';
+                const buf = this.engine.borrowInputState.inputBuffer;
+                inputBadge.textContent = buf ? `+${buf}` : '?';
+                this.annoCells[i].appendChild(inputBadge);
+            } else if (this.engine.annotations[i].borrowAdd > 0) {
                 const addTen = document.createElement('span');
                 addTen.className = 'anno-add-ten';
                 addTen.textContent = `+10`;
                 this.annoCells[i].appendChild(addTen);
             }
-            if (this.engine.annotations[i].newTop !== null) {
+
+            // 2. 原數字劃記剩餘值 (若正在輸入剩餘數，顯示待輸入框；若已完成，顯示徽章)
+            if (isWaitingRemainder) {
+                const inputBadge = document.createElement('span');
+                inputBadge.className = 'anno-input-active';
+                inputBadge.textContent = this.engine.borrowInputState.inputBuffer || '?';
+                this.annoCells[i].appendChild(inputBadge);
+            } else if (this.engine.annotations[i].newTop !== null) {
                 const badge = document.createElement('span');
                 badge.className = 'anno-badge';
                 badge.textContent = this.engine.annotations[i].newTop;
@@ -285,7 +310,7 @@ class MathBorrowingApp {
                 this.ansCells[i].className = 'answer-cell filled';
             } else {
                 this.ansCells[i].textContent = '?';
-                if (i === this.engine.currentCol && this.engine.phase !== 'DONE') {
+                if (i === this.engine.currentCol && this.engine.phase === 'READY_SUBTRACT') {
                     this.ansCells[i].className = 'answer-cell active-target';
                 } else {
                     this.ansCells[i].className = 'answer-cell';
@@ -296,6 +321,12 @@ class MathBorrowingApp {
         // 當前計算欄位指示器
         if (this.engine.phase === 'DONE') {
             this.stepIndicator.textContent = '🎉 計算完成！';
+        } else if (this.engine.phase === 'BORROW_INPUT' && borrowStep) {
+            if (borrowStep.type === 'REMAINDER') {
+                this.stepIndicator.textContent = `✍️ 請在【${this.engine.getColName(borrowStep.col)}】填入被借位後剩下的數字`;
+            } else {
+                this.stepIndicator.textContent = `✍️ 請在【${this.engine.getColName(borrowStep.col)}】填入借來的數字 (10)`;
+            }
         } else {
             this.stepIndicator.textContent = `正在計算：${this.engine.getColName(this.engine.currentCol)}`;
         }
@@ -314,6 +345,18 @@ class MathBorrowingApp {
             this.btnBorrow.disabled = true;
             this.btnBorrow.classList.remove('pulse-need');
             this.btnBorrow.textContent = '✨ 完成所有位數！';
+            return;
+        }
+
+        if (this.engine.phase === 'BORROW_INPUT') {
+            this.btnBorrow.disabled = true;
+            this.btnBorrow.classList.remove('pulse-need');
+            const step = this.engine.getCurrentBorrowStep();
+            if (step && step.type === 'REMAINDER') {
+                this.btnBorrow.innerHTML = `<span>✍️</span> 請輸入【${this.engine.getColName(step.col)}】被借走後剩多少`;
+            } else {
+                this.btnBorrow.innerHTML = `<span>✍️</span> 請在上方直式輸入借來的數字（輸入 10）`;
+            }
             return;
         }
 
@@ -342,7 +385,7 @@ class MathBorrowingApp {
         if (this.engine.phase !== 'CHECK_BORROW') return;
 
         window.soundEngine.playClick();
-        const borrowInfo = this.engine.executeBorrow();
+        const borrowInfo = this.engine.startBorrowInput();
         if (!borrowInfo) return;
 
         // 鎖定按鈕防止重複點擊
@@ -353,17 +396,39 @@ class MathBorrowingApp {
             this.renderCandyStore({ from: borrowInfo.source, to: borrowInfo.target });
             this.renderVerticalEquation();
             this.updateControlState();
-            const top = borrowInfo.newTopValue;
-            const bottom = this.engine.getCurrentBottomValue(this.engine.currentCol);
-            this.dialogText.textContent = `✨ 借位成功！現在${this.engine.getColName(this.engine.currentCol)}有 ${top} 個了，夠減囉！快算算看剩下多少（${top} − ${bottom}）！`;
+            this.dialogText.textContent = borrowInfo.firstStep.prompt;
         });
     }
 
-    // 處理輸入數字答案
+    // 處理輸入數字答案 (支援借位填空與差額答案)
     handleNumberInput(numStr) {
         if (this.engine.phase === 'DONE') return;
 
         window.soundEngine.playClick();
+
+        // 1. 如果當前正處於「借位填空」階段（被借位後剩多少、借來之後的數字）
+        if (this.engine.phase === 'BORROW_INPUT') {
+            const result = this.engine.submitBorrowInput(numStr);
+            if (result.correct) {
+                if (result.stepFinished) {
+                    window.soundEngine.playCorrect();
+                }
+                this.renderAll();
+                this.dialogText.textContent = result.message;
+            } else {
+                window.soundEngine.playWrong();
+                const step = this.engine.getCurrentBorrowStep();
+                if (step && this.annoCells[step.col]) {
+                    this.annoCells[step.col].classList.add('shake-source');
+                    setTimeout(() => this.annoCells[step.col].classList.remove('shake-source'), 400);
+                }
+                this.renderAll();
+                this.dialogText.textContent = result.message;
+            }
+            return;
+        }
+
+        // 2. 如果當前正處於「差額計算」階段
         const result = this.engine.submitDifference(numStr);
 
         if (result.correct) {

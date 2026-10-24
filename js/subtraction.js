@@ -32,10 +32,13 @@ class SubtractionEngine {
         // 當前計算進行到的位數 (0: 個位, 1: 十位, 2: 百位, 3: 千位)
         this.currentCol = 0;
 
-        // 狀態階段: 'CHECK_BORROW' (需判斷是否借位) -> 'READY_SUBTRACT' (可以計算並輸入答案) -> 'DONE'
+        // 狀態階段: 'CHECK_BORROW' (需判斷是否借位) -> 'BORROW_INPUT' (輸入借位標記) -> 'READY_SUBTRACT' (計算答案) -> 'DONE'
         this.phase = 'CHECK_BORROW';
 
-        // 記錄跨零借位的待執行步驟佇列 (例如十位是0，要先從百位借)
+        // 借位輸入狀態機
+        this.borrowInputState = null;
+
+        // 記錄跨零借位的待執行步驟佇列
         this.pendingBorrowChain = [];
 
         this.updatePhase();
@@ -136,7 +139,181 @@ class SubtractionEngine {
         }
     }
 
-    // 執行借位動作 (如果跨零，分步執行或一併執行並標註歷程)
+    // 啟動借位學生互動輸入流程（讓學生主動輸入：被借位後剩多少、借來之後的數字）
+    startBorrowInput() {
+        const source = this.findBorrowSource();
+        if (source === -1) return null;
+
+        const target = this.currentCol;
+        const steps = [];
+
+        // 複製一份暫時的數值，用以推算每一步借位後的數字
+        const tempDigits = [...this.minuendDigits];
+
+        // 1. 被借位位數的扣除歷程 (從最高來源依序往右傳遞)
+        for (let curr = source; curr > target; curr--) {
+            const giver = curr;
+            const receiver = curr - 1;
+
+            const giverOrig = tempDigits[giver];
+            const giverRem = giverOrig - 1;
+            tempDigits[giver] = giverRem;
+            tempDigits[receiver] += 10;
+
+            const isIntermediate = (curr < source);
+            let promptMsg = '';
+            if (!isIntermediate) {
+                promptMsg = `【${this.getColName(giver)}】原本有 ${giverOrig} 個，借出 1 個後，還剩下多少？請輸入！`;
+            } else {
+                promptMsg = `【${this.getColName(giver)}】原本是 0，向左借來 10 後，又借出 1 個給右邊，還剩下多少？請輸入！`;
+            }
+
+            steps.push({
+                type: 'REMAINDER',
+                col: giver,
+                giver,
+                receiver,
+                expected: giverRem,
+                prompt: promptMsg
+            });
+        }
+
+        // 2. 目標位數的接收歷程 (借來之後的數字，借來 10)
+        const targetOrig = this.minuendDigits[target];
+        steps.push({
+            type: 'BORROW_ADD',
+            col: target,
+            expected: 10,
+            acceptedTotal: 10 + targetOrig,
+            prompt: `向左邊借了 1 個大單位，拆開後借來了多少呢？請在上方輸入借來的數字（10）：`
+        });
+
+        this.borrowInputState = {
+            source,
+            target,
+            steps,
+            stepIndex: 0,
+            inputBuffer: '',
+            targetFinalTop: targetOrig + 10
+        };
+
+        this.phase = 'BORROW_INPUT';
+
+        // 劃掉第一個被借位的數字
+        this.annotations[source].struck = true;
+
+        return {
+            source,
+            target,
+            firstStep: steps[0]
+        };
+    }
+
+    getCurrentBorrowStep() {
+        if (!this.borrowInputState) return null;
+        return this.borrowInputState.steps[this.borrowInputState.stepIndex] || null;
+    }
+
+    clearBorrowBuffer() {
+        if (this.borrowInputState) {
+            this.borrowInputState.inputBuffer = '';
+        }
+    }
+
+    // 處理學生在借位階段輸入的數字 (0-9)
+    submitBorrowInput(inputChar) {
+        if (this.phase !== 'BORROW_INPUT' || !this.borrowInputState) {
+            return { valid: false };
+        }
+
+        const state = this.borrowInputState;
+        const currentStep = state.steps[state.stepIndex];
+        if (!currentStep) return { valid: false };
+
+        const newBuffer = state.inputBuffer + inputChar;
+        const expectedStr = currentStep.expected.toString();
+        const acceptedTotalStr = currentStep.acceptedTotal ? currentStep.acceptedTotal.toString() : null;
+
+        // 1. 完全吻合預期值（或學生直接算出借來後的總和如 15）
+        if (newBuffer === expectedStr || (acceptedTotalStr && newBuffer === acceptedTotalStr)) {
+            if (currentStep.type === 'REMAINDER') {
+                this.annotations[currentStep.col].struck = true;
+                this.annotations[currentStep.col].newTop = currentStep.expected;
+                this.minuendDigits[currentStep.col] = currentStep.expected;
+            } else if (currentStep.type === 'BORROW_ADD') {
+                this.annotations[currentStep.col].borrowAdd = 10;
+                this.minuendDigits[currentStep.col] += 10;
+            }
+
+            state.stepIndex++;
+            state.inputBuffer = '';
+
+            // 檢查是否還有下一步借位輸入
+            if (state.stepIndex < state.steps.length) {
+                const nextStep = state.steps[state.stepIndex];
+                if (nextStep.type === 'REMAINDER') {
+                    this.annotations[nextStep.col].struck = true;
+                }
+                return {
+                    correct: true,
+                    stepFinished: true,
+                    allFinished: false,
+                    nextStep: nextStep,
+                    message: `太棒了！寫對了！接著：${nextStep.prompt}`
+                };
+            } else {
+                // 所有借位劃記都完成了！
+                this.phase = 'READY_SUBTRACT';
+                const finalTop = this.getCurrentTopValue(this.currentCol);
+                const bottom = this.getCurrentBottomValue(this.currentCol);
+                this.borrowInputState = null;
+                return {
+                    correct: true,
+                    stepFinished: true,
+                    allFinished: true,
+                    message: `太棒了！借位標記都寫對了！現在【${this.getColName(this.currentCol)}】有 ${finalTop} 個，減去 ${bottom} 個（${finalTop} − ${bottom}），答案是多少？`
+                };
+            }
+        }
+
+        // 2. 期望是兩位數 (如 "10")，且輸入目前是第一個位數 "1"
+        if (expectedStr.length > 1 && expectedStr.startsWith(newBuffer)) {
+            state.inputBuffer = newBuffer;
+            return {
+                correct: true,
+                partial: true,
+                inputBuffer: newBuffer,
+                message: `已經輸入 ${newBuffer}，再按一個 ${expectedStr[1]}，就是 ${expectedStr} 囉！`
+            };
+        }
+
+        // 3. 期望可能為 acceptedTotal (如 "15")，且輸入目前是第一個位數 "1"
+        if (acceptedTotalStr && acceptedTotalStr.length > 1 && acceptedTotalStr.startsWith(newBuffer)) {
+            state.inputBuffer = newBuffer;
+            return {
+                correct: true,
+                partial: true,
+                inputBuffer: newBuffer,
+                message: `已經輸入 ${newBuffer}，請繼續輸入！`
+            };
+        }
+
+        // 4. 輸入錯誤
+        state.inputBuffer = '';
+        let hint = '';
+        if (currentStep.type === 'REMAINDER') {
+            hint = `想一想：借出 1 個後還剩多少呢？答案是 ${currentStep.expected} 喔，再試一次！`;
+        } else {
+            hint = `想一想：借 1 當 10，借來的數字是 10 喔！請輸入 10！`;
+        }
+
+        return {
+            correct: false,
+            message: hint
+        };
+    }
+
+    // 執行借位動作 (直接一鍵完成，亦可作為備用)
     executeBorrow() {
         const source = this.findBorrowSource();
         if (source === -1) return null;
@@ -237,6 +414,11 @@ class SubtractionEngine {
         const itemName = this.getColItemName(this.currentCol);
         const top = this.getCurrentTopValue(this.currentCol);
         const bottom = this.getCurrentBottomValue(this.currentCol);
+
+        if (this.phase === 'BORROW_INPUT') {
+            const step = this.getCurrentBorrowStep();
+            return step ? step.prompt : '請在直式上方輸入借位數字！';
+        }
 
         if (this.phase === 'CHECK_BORROW') {
             const info = this.getBorrowExplanation();
